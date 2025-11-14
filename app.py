@@ -25,6 +25,11 @@ def check_winner(board):
 def admin_page():
     st.title("Admin Dashboard")
 
+    # Logout button
+    if st.button("Logout Admin"):
+        st.session_state["admin"] = False
+        st.rerun()
+
     menu = st.sidebar.radio("Menu", ["Create User", "User List", "Tournament Results"])
 
     # CREATE USER
@@ -61,37 +66,46 @@ def admin_page():
 def user_game_page():
     st.title("OX Game (Two Players)")
 
-    # Login area
-    st.subheader("Player Login")
-    col1, col2 = st.columns(2)
+    # If users logged in, show logout button
+    if st.session_state.get("players"):
+        if st.button("Logout Players"):
+            del st.session_state["players"]
+            del st.session_state["board"]
+            del st.session_state["turn"]
+            st.rerun()
 
-    with col1:
-        p1_name = st.text_input("Player 1 Name")
-        p1_username = st.text_input("Player 1 Username")
-        p1_password = st.text_input("Player 1 Password", type="password")
+    # If not logged in -> show login form
+    if not st.session_state.get("players"):
+        st.subheader("Player Login")
+        col1, col2 = st.columns(2)
 
-    with col2:
-        p2_name = st.text_input("Player 2 Name")
-        p2_username = st.text_input("Player 2 Username")
-        p2_password = st.text_input("Player 2 Password", type="password")
+        with col1:
+            p1_name = st.text_input("Player 1 Name")
+            p1_username = st.text_input("Player 1 Username")
+            p1_password = st.text_input("Player 1 Password", type="password")
 
-    if st.button("Login Players"):
-        user1 = users_collection.find_one({"username": p1_username, "password": p1_password})
-        user2 = users_collection.find_one({"username": p2_username, "password": p2_password})
+        with col2:
+            p2_name = st.text_input("Player 2 Name")
+            p2_username = st.text_input("Player 2 Username")
+            p2_password = st.text_input("Player 2 Password", type="password")
 
-        if not user1 or not user2:
-            st.error("Invalid login for one or both players!")
-            return
+        if st.button("Login Players"):
+            user1 = users_collection.find_one({"username": p1_username, "password": p1_password})
+            user2 = users_collection.find_one({"username": p2_username, "password": p2_password})
 
-        st.session_state["players"] = {
-            "X": user1["name"],
-            "O": user2["name"]
-        }
-        st.session_state["board"] = [""] * 9
-        st.session_state["turn"] = "X"
-        st.rerun()
+            if not user1 or not user2:
+                st.error("Invalid login for one or both players!")
+                return
 
-    # Game only runs if logged in
+            st.session_state["players"] = {
+                "X": user1["name"],
+                "O": user2["name"]
+            }
+            st.session_state["board"] = [""] * 9
+            st.session_state["turn"] = "X"
+            st.rerun()
+
+    # ---------------- GAME AREA ----------------
     if "players" in st.session_state:
 
         st.subheader(f"Turn: {st.session_state['turn']} ({st.session_state['players'][st.session_state['turn']]})")
@@ -102,7 +116,6 @@ def user_game_page():
             st.session_state["turn"] = "X"
             st.rerun()
 
-        # GAME GRID
         cols = st.columns(3)
         for i in range(9):
             if cols[i % 3].button(st.session_state["board"][i] or " ", key=f"cell_{i}"):
@@ -123,7 +136,6 @@ def user_game_page():
                         st.balloons()
                         return
 
-                    # Switch turn
                     st.session_state["turn"] = "O" if st.session_state["turn"] == "X" else "X"
                     st.rerun()
 
@@ -133,22 +145,27 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Select", ["Admin Login", "User Game"])
 
+    # ---------------- ADMIN LOGIN ----------------
     if page == "Admin Login":
         st.title("Admin Login")
 
-        username = st.text_input("Admin Username")
-        password = st.text_input("Admin Password", type="password")
+        # If NOT logged in, show login form
+        if not st.session_state.get("admin"):
+            username = st.text_input("Admin Username")
+            password = st.text_input("Admin Password", type="password")
 
-        if st.button("Login"):
-            if username == "kapil" and password == "kapil01":
-                st.session_state["admin"] = True
-                st.rerun()
-            else:
-                st.error("Invalid admin credentials")
+            if st.button("Login"):
+                if username == "kapil" and password == "kapil01":
+                    st.session_state["admin"] = True
+                    st.rerun()
+                else:
+                    st.error("Invalid admin credentials")
 
+        # If logged in, show admin dashboard
         if st.session_state.get("admin"):
             admin_page()
 
+    # ---------------- USER GAME ----------------
     elif page == "User Game":
         user_game_page()
 
