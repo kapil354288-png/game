@@ -89,7 +89,7 @@ def user_game_page():
         }
         st.session_state["board"] = [""] * 9
         st.session_state["turn"] = "X"
-        st.experimental_rerun()
+        st.rerun()
 
     # Game only runs if logged in
     if "players" in st.session_state:
@@ -100,7 +100,7 @@ def user_game_page():
         if st.button("Restart Game"):
             st.session_state["board"] = [""] * 9
             st.session_state["turn"] = "X"
-            st.experimental_rerun()
+            st.rerun()
 
         # GAME GRID
         cols = st.columns(3)
@@ -125,7 +125,7 @@ def user_game_page():
 
                     # Switch turn
                     st.session_state["turn"] = "O" if st.session_state["turn"] == "X" else "X"
-                    st.experimental_rerun()
+                    st.rerun()
 
 
 # --------------------- MAIN APP ---------------------
@@ -142,7 +142,7 @@ def main():
         if st.button("Login"):
             if username == "kapil" and password == "kapil01":
                 st.session_state["admin"] = True
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid admin credentials")
 
